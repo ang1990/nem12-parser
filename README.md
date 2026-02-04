@@ -10,13 +10,20 @@ Install the required Python packages: `pip install -r requirements.txt`
 # Operation
 
 The parser receives CSV files containing NEM12-compliant lines,
-and outputs INSERT statements according to the meter_readings table schema to STDOUT.
+and outputs INSERT statements according to the meter_readings table schema.
 
 To run the parser on a file:
 
 ```bash
 python main_parser.py nem_12_file.csv
 ```
+This writes the insert statements to STDOUT.
+
+If you want to write the insert statements directly to an output file instead, you may add the optional arg like so:
+```bash
+python main_parser.py test.csv --output_file="output.txt"
+```
+
 
 # Technical Assessment Answers
 
