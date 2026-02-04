@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from itertools import batched
 from zoneinfo import ZoneInfo
 from decimal import Decimal
-from sqlalchemy import Column, String, func
+from sqlalchemy import Column, String
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.types import DateTime, Uuid, Numeric
 from sqlalchemy.dialects.mysql import insert
@@ -70,14 +70,14 @@ def parse(filepath: str):
         assert header_row[1] == 'NEM12', 'Only NEM12 format is supported'
 
         for meter_reading_batch in batched(get_meter_readings(reader), n=INSERT_BATCH_SIZE):
-            insert_stmt = insert(MeterReading).values([{
+            _insert_stmt = insert(MeterReading).values([{
                 'nmi': mr.nmi,
                 'timestamp': mr.timestamp,
                 'consumption': mr.consumption
             } for mr in meter_reading_batch])
 
-            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-                consumption=(MeterReading.consumption + insert_stmt.inserted.consumption)
+            on_duplicate_key_stmt = _insert_stmt.on_duplicate_key_update(
+                consumption=(MeterReading.consumption + _insert_stmt.inserted.consumption)
             )
             compiled_statement = on_duplicate_key_stmt.compile(compile_kwargs={"literal_binds": True})
             yield str(compiled_statement)
@@ -140,8 +140,7 @@ if __name__ == '__main__':
     parser.add_argument('filepath', help='The name of the file to parse.')
     parser.add_argument('--output_file', nargs='?', type=str, default='',
                         help='Name of the file to write the insert statements to. '
-                             'Ignore if you do not want the parser to write to a file.'
-                             'Alternative you could pipe STDOUT to a file instead.')
+                             'Ignore if you do not want the parser to write directly to a file.')
     args = parser.parse_args()
     if args.output_file:
         with open(args.output_file, 'w') as output_file:
